@@ -361,7 +361,7 @@ defmodule LangChain.ChatModels.ChatOllamaAI do
   defp create_message(message, status, message_type) do
     case message_type.new(Map.merge(message, %{"status" => status})) do
       {:ok, new_message} ->
-        new_message
+        [new_message]
 
       {:error, changeset} ->
         {:error, Utils.changeset_error_to_string(changeset)}
