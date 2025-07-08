@@ -800,6 +800,37 @@ defmodule LangChain.ChatModels.ChatGoogleAI do
     end
   end
 
+  def do_process_response(
+        _model,
+        %{
+          "finishReason" => finish,
+          "index" => index
+        },
+        message_type
+      ) do
+    status =
+      case message_type do
+        MessageDelta ->
+          :incomplete
+
+        Message ->
+          finish_reason_to_status(finish)
+      end
+
+    case message_type.new(%{
+           "content" => "",
+           "role" => unmap_role("model"), # assume model role in this case
+           "status" => status,
+           "index" => index
+         }) do
+      {:ok, message} ->
+        message
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        {:error, LangChainError.exception(changeset)}
+    end
+  end
+
   def do_process_response(_model, %{"error" => %{"message" => reason}} = response, _) do
     Logger.error("Received error from API: #{inspect(reason)}")
     {:error, LangChainError.exception(message: reason, original: response)}
